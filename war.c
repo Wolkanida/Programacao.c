@@ -9,12 +9,13 @@ struct Territorio {
 };
 
 int main() {
+    int i;
     // 2. Criando o vetor (a gaveta com 5 fichas)
     struct Territorio lista[5];
 
     // 3. Laço para entrada de dados.
     printf("--- Cadastro de Territorios ---\n");
-    for (int i = 0; i <5; i++) {
+    for (i = 0; i <5; i++) {
         printf("\n Territorio %d:\n", i + 1);
 
         printf("Nome: ");
@@ -35,7 +36,7 @@ int main() {
     printf("     RELATORIO DE TERRITORIOS        \n");
     printf("=====================================\n");
 
-    for (i =0; i <5; i++) {
+    for (i = 0; i < 5; i++) {
         //Exibe os dados formatados.
         
         printf("ID: %d | Nome: %-15s | Cor: %-10s | Tropas: %d\n",
