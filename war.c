@@ -32,7 +32,8 @@ int main() {
 
     //4. Laço para exibição
 
-    printf("=====================================\n");
+    print
+    f("=====================================\n");
     printf("     RELATORIO DE TERRITORIOS        \n");
     printf("=====================================\n");
 
