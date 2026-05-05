@@ -1,78 +1,110 @@
 #include <stdio.h>
-#include <stdlib.h> //necessario para malloc e calloc
+#include <stdlib.h> // Para malloc, calloc e free
 #include <string.h>
-#include <time.h> // necessario uso de tempo (dados aleatorios)
+#include <time.h>   // Para os dados aleatórios
 
-// definição da struct
-struct territorio {
+// 1. Definição da ficha (struct)
+struct Territorio {
     char nome[30];
     char cor[10];
-    int tropas
+    int tropas;
 };
 
-// funções de modularização
+// --- MODULARIZAÇÃO: FUNÇÕES ---
 
-// função simular o ataque usando ponteiros
-void atacar(struct territorio *atacante, struct territorio *defensor) {
-    int dadoAtacante = (rand() % 6) + 1; //gera dado de 1 a 6
-    int dadoDefensor = (rand() % 6) + 1;
+// Função para exibir o mapa atual
+void exibirMapa(struct Territorio *lista, int n) {
+    printf("\n========= SITUAÇÃO DO MAPA =========\n");
+    for (int i = 0; i < n; i++) {
+        printf("[%d] Território: %-15s | Cor: %-10s | Tropas: %d\n", 
+                i + 1, lista[i].nome, lista[i].cor, lista[i].tropas);
+    }
+    printf("====================================\n");
+}
 
-    printf("\n--- BATALHA: %s vs %s ---\n", atacante->nome, defensor->nome);
+// Função de ataque por turno (Uso de Ponteiros e Seta ->)
+void atacar(struct Territorio *atq, struct Territorio *def, char *log) {
+    int dadoAtq = (rand() % 6) + 1;
+    int dadoDef = (rand() % 6) + 1;
 
-    if(dadoAtacante > dadoDefensor) {
-        printf("Vitoria do Atacante!\n");
-        // transfere a cor e metade das tropas
-        strcpy(defensor->cor, atacante->cor);
-        defensor->tropas = atacante->tropas / 2;
+    // Guardando o resultado no Log (espaço alocado via malloc)
+    sprintf(log, "ÚLTIMO CONFRONTO: %s (%d) vs %s (%d)", atq->nome, dadoAtq, def->nome, dadoDef);
+    printf("\n%s\n", log);
+
+    if (dadoAtq > dadoDef) {
+        printf(">>> O atacante venceu a rodada!\n");
+        def->tropas--;
     } else {
-        printf(" O defensor resistiu! Atacante perde 1 tropa.\n");
-        atacante->tropas--;
+        printf(">>> O defensor resistiu!\n");
+        atq->tropas--;
+    }
+
+    // Lógica de Conquista
+    if (def->tropas <= 0) {
+        printf("\n!!! VITÓRIA: %s conquistou %s !!!\n", atq->nome, def->nome);
+        strcpy(def->cor, atq->cor);
+        
+        // Regra: Transfere metade das tropas (mínimo 1 para o perdedor)
+        def->tropas = atq->tropas / 2;
+        atq->tropas -= def->tropas;
+        
+        if (atq->tropas == 0) atq->tropas = 1; // Nunca deixa o atacante zerado
     }
 }
 
 int main() {
-    int n, i;
-    struct territorio *lista; //ponteiro para lista dinamica
-    
-    srand(time(NULL)); //inicializa a semente dos dados aleatorios
+    int n, op, idAtq, idDef;
+    struct Territorio *lista;
+    char *logBatalha;
 
-    // alocaçao dinamica
-    printf("Quantos Territorios deseja registrar? ");
+    srand(time(NULL));
+
+    printf("Quantos territórios no jogo? ");
     scanf("%d", &n);
 
-    // Reserva espaço na memoria.
-    lista = (struct territorio*) malloc(n * sizeof(struct territorio));
-
-    // Registro cadastro
-    for (i = 0; i < n; i++) {
-        printf("\n Territorio %d:\n", i + 1);
-        printf("Nome: ");
-        scanf(" %[^\n]s", lista[i].nome);
-        printf("Cor: ");
-        scanf("%s", lista[i].cor);
-        printf("Tropas: ");
-        scanf("%d", &lista[i].tropas);
+    // --- USO DAS DUAS FUNÇÕES DE ALOCAÇÃO ---
     
+    // 1. CALLOC: Para a lista de territórios (limpa a memória)
+    lista = (struct Territorio*) calloc(n, sizeof(struct Territorio));
+
+    // 2. MALLOC: Para um buffer de texto do relatório de batalha
+    logBatalha = (char*) malloc(100 * sizeof(char));
+
+    // Cadastro
+    for (int i = 0; i < n; i++) {
+        printf("\nCadastro do Território %d:\n", i + 1);
+        printf("Nome: ");    scanf(" %[^\n]s", lista[i].nome);
+        printf("Cor: ");     scanf("%s", lista[i].cor);
+        printf("Tropas: ");  scanf("%d", &lista[i].tropas);
     }
 
-    //exemplo de ataque
-    if (n >= 2) {
-        atacar(&lista[0], &lista[1]);
-    }
+    // LOOP DE TURNOS
+    do {
+        exibirMapa(lista, n);
+        printf("\nMENU:\n1. Atacar (1 Turno)\n2. Sair\nEscolha: ");
+        scanf("%d", &op);
 
-    // Exibição pós-Ataque
-    printf("\n=== ESTADO ATUAL DO MAPA ===\n");
-    for (i = 0; i < n; i++) {
-        printf("ID: %d | Nome: %-15s | Cor: %-10s | Tropas: %d\n",
-                i + 1, lista[i].nome, lista[i].cor, lista[i].tropas);
-    }
+        if (op == 1) {
+            printf("ID Atacante: "); scanf("%d", &idAtq);
+            printf("ID Defensor: "); scanf("%d", &idDef);
 
-    // liberar memoria com free
+            // Validação operacional
+            if (idAtq > 0 && idAtq <= n && idDef > 0 && idDef <= n && idAtq != idDef) {
+                if (lista[idAtq-1].tropas > 1) {
+                    atacar(&lista[idAtq-1], &lista[idDef-1], logBatalha);
+                } else {
+                    printf("\n[AVISO] Tropas insuficientes para atacar!\n");
+                }
+            } else {
+                printf("\n[ERRO] Comando inválido!\n");
+            }
+        }
+    } while (op != 2);
+
+    // --- LIBERAÇÃO DE MEMÓRIA (Obrigatório) ---
     free(lista);
-    printf("\n Memoria Liberada. Fim do programa.\n");
+    free(logBatalha);
 
+    printf("\nMemória liberada com sucesso. Fim da missão!\n");
     return 0;
 }
-
-
-
